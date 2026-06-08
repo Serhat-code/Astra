@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="description" content="ASTRA — A living census of the celestial. 100 of the most important stars catalogued, from the nearest dwarf to the most luminous hypergiant.">
+  <meta name="theme-color" content="#050406">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="ASTRA — A Living Census of the Celestial">
+  <meta property="og:description" content="We chart what cannot be held — every star a line, every line a small refusal of the dark.">
+  <meta property="og:site_name"   content="ASTRA">
+  <meta property="og:image"       content="/og-image.jpg">
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="ASTRA — A Living Census of the Celestial">
+  <meta name="twitter:description" content="We chart what cannot be held — every star a line, every line a small refusal of the dark.">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"ASTRA","description":"A living census of the celestial","author":{"@type":"Organization","name":"Atlamaz Studio","url":"https://atlamaz.studio"}}</script>
+  <title>ASTRA — A Living Census of the Celestial</title>
+  <style>
+    /* ── TOKENS ── */
+    :root{
+      --bg:#050406; --ink:#EDE6DA; --muted:#7C7468;
+      --amber:#F5B870; --amber-deep:#C8843C; --line:rgba(245,184,112,.18);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{
+      background:radial-gradient(ellipse at 50% 30%,#0B0910 0%,#050406 60%,#030203 100%);
+      color:var(--ink); font-family:Georgia,'Times New Roman',serif;
+      text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased;
+      overflow-x:hidden; cursor:none;
+    }
+    ::selection{background:rgba(245,184,112,.25);color:var(--ink);}
+    canvas#cosmos{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;}
+    .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+      background:radial-gradient(ellipse at center,transparent 55%,rgba(3,2,3,.75) 100%);}
+    .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.04;mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+    main{position:relative;z-index:2;}
+    .mono{font-family:'SFMono-Regular',Consolas,'Courier New',monospace;}
+
+    /* ── SKIP LINK ── */
+    .skip-link{position:fixed;top:-100%;left:20px;z-index:99999;padding:8px 18px;
+      background:var(--amber);color:#000;font-size:13px;text-decoration:none;
+      border-radius:0 0 4px 4px;transition:top .2s;}
+    .skip-link:focus{top:0;outline:none;}
+    :focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:2px;}
+    :focus:not(:focus-visible){outline:none;}
+
+    /* ── CURSOR ── */
+    .cur-dot,.cur-ring{position:fixed;top:0;left:0;z-index:9999;pointer-events:none;
+      border-radius:50%;transform:translate(-50%,-50%);will-change:transform;}
+    .cur-dot{width:6px;height:6px;background:var(--amber);box-shadow:0 0 12px 2px var(--amber);
+      transition:width .25s,height .25s;}
+    .cur-ring{width:34px;height:34px;border:1px solid var(--line);
+      transition:width .3s,height .3s,border-color .3s,background .3s;}
+    body.hov .cur-ring{width:64px;height:64px;border-color:var(--amber);background:rgba(245,184,112,.06);}
+    body.hov .cur-dot{width:4px;height:4px;}
+
+    /* ── LOADER ── */
+    #loader{position:fixed;inset:0;z-index:10000;background:#030203;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      transition:opacity 1.1s,visibility 1.1s;}
+    #loader.done{opacity:0;visibility:hidden;}
+    #loader .label{font-size:11px;letter-spacing:.5em;text-transform:uppercase;color:var(--muted);margin-bottom:26px;}
+    #count{font-size:clamp(56px,12vw,150px);font-weight:400;letter-spacing:.02em;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums;}
+    #loader .of{font-size:12px;letter-spacing:.4em;color:var(--amber);margin-top:24px;text-transform:uppercase;}
+    .bar{width:min(280px,60vw);height:1px;background:rgba(255,255,255,.08);margin-top:34px;overflow:hidden;}
+    .bar i{display:block;height:100%;width:0;background:var(--amber);box-shadow:0 0 10px var(--amber);}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;
+      align-items:center;padding:26px clamp(20px,5vw,60px);mix-blend-mode:difference;}
+    nav .brand{font-size:15px;letter-spacing:.55em;text-transform:uppercase;color:#fff;}
+    nav .concept{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#fff;opacity:.6;}
+    nav a.concept{text-decoration:none;opacity:.6;transition:opacity .3s;}
+    nav a.concept:hover{opacity:1;}
+
+    section{padding:0 clamp(20px,5vw,60px);}
+
+    /* ── HERO ── */
+    .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+      align-items:center;text-align:center;position:relative;}
+    .hero .eyebrow{font-size:11px;letter-spacing:.55em;text-transform:uppercase;color:var(--amber);margin-bottom:30px;}
+    .hero h1{font-size:clamp(72px,21vw,310px);font-weight:400;line-height:.86;letter-spacing:.04em;
+      background:linear-gradient(180deg,#fff 0%,#F5DDBE 55%,#C8843C 120%);
+      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+    @supports not (-webkit-background-clip:text){.hero h1{color:var(--amber);}}
+    .hero .tag{font-size:clamp(13px,1.6vw,17px);letter-spacing:.2em;color:var(--muted);
+      text-transform:uppercase;margin-top:34px;max-width:520px;line-height:1.9;}
+    .scrollcue{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);
+      font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);
+      display:flex;flex-direction:column;align-items:center;gap:12px;}
+    .scrollcue .ln{width:1px;height:42px;background:linear-gradient(var(--amber),transparent);animation:drop 2.4s infinite;}
+    @keyframes drop{
+      0%{transform:scaleY(0);transform-origin:top;}40%{transform:scaleY(1);transform-origin:top;}
+      60%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+
+    /* ── SECTION HEADERS ── */
+    .shead{display:flex;align-items:baseline;gap:18px;margin-bottom:48px;}
+    .shead .idx{font-size:12px;letter-spacing:.3em;color:var(--amber);}
+    .shead h2{font-size:clamp(30px,5vw,62px);font-weight:400;letter-spacing:.03em;}
+    .reveal{opacity:0;transform:translateY(40px);transition:opacity 1.1s,transform 1.1s;}
+    .reveal.in{opacity:1;transform:none;}
+
+    /* ── CENSUS (horizontal scroll) ── */
+    .census{padding-top:18vh;padding-bottom:14vh;}
+
+    .scroll-ui{position:relative;}
+    .scroll-track{
+      display:flex; gap:2px; overflow-x:auto; overflow-y:hidden;
+      scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+      scrollbar-width:thin; scrollbar-color:rgba(245,184,112,.4) transparent;
+      padding-bottom:6px; padding-right:clamp(20px,5vw,60px);
+    }
+    .scroll-track::-webkit-scrollbar{height:2px;}
+    .scroll-track::-webkit-scrollbar-track{background:transparent;}
+    .scroll-track::-webkit-scrollbar-thumb{background:rgba(245,184,112,.35);border-radius:1px;}
+
+    /* ── STAR CARD ── */
+    .star-card{
+      flex:0 0 220px; scroll-snap-align:start;
+      background:linear-gradient(170deg,rgba(255,255,255,.03) 0%,rgba(0,0,0,0) 100%);
+      border:1px solid var(--line); border-radius:2px;
+      padding:28px 20px 24px; cursor:pointer; position:relative;
+      transition:border-color .4s,transform .4s,background .4s;
+      display:flex; flex-direction:column; gap:14px;
+    }
+    .star-card:hover,.star-card:focus-visible{
+      border-color:rgba(245,184,112,.55); transform:translateY(-4px);
+      background:linear-gradient(170deg,rgba(245,184,112,.07) 0%,rgba(0,0,0,0) 100%);
+      outline:none;
+    }
+    .star-card .card-glow{
+      width:40px;height:40px;border-radius:50%;
+      background:radial-gradient(circle,var(--sc,#f8f9ff) 0%,transparent 70%);
+      opacity:.9; flex-shrink:0;
+      box-shadow:0 0 18px 4px var(--sc,#f8f9ff);
+    }
+    .star-card .card-name{font-size:clamp(18px,2.4vw,26px);font-weight:400;letter-spacing:.02em;line-height:1.1;}
+    .star-card .card-type{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);}
+    .star-card .card-meta{margin-top:auto;display:flex;flex-direction:column;gap:5px;
+      font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+    .star-card .card-meta span b{color:rgba(237,230,218,.7);font-weight:400;}
+    .star-card .card-badge{
+      position:absolute;top:14px;right:14px;
+      font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--amber);
+      opacity:0;transition:opacity .3s;
+    }
+    .star-card:hover .card-badge,.star-card:focus-visible .card-badge{opacity:1;}
+
+    /* spectral colours */
+    .star-card[data-sp="O"]{--sc:#9bb0ff;}
+    .star-card[data-sp="B"]{--sc:#cad7ff;}
+    .star-card[data-sp="A"]{--sc:#f0f4ff;}
+    .star-card[data-sp="F"]{--sc:#fff4ea;}
+    .star-card[data-sp="G"]{--sc:#ffe788;}
+    .star-card[data-sp="K"]{--sc:#ffb347;}
+    .star-card[data-sp="M"]{--sc:#ff6b45;}
+    .star-card[data-sp="WR"]{--sc:#7df9ff;}
+    .star-card[data-sp="LBV"]{--sc:#b0d4ff;}
+    .star-card[data-sp="YHG"]{--sc:#fff099;}
+    .star-card[data-sp="NS"]{--sc:#aaffee;}
+    .star-card[data-sp="WD"]{--sc:#e0eeff;}
+
+    /* scroll nav bar */
+    .scroll-nav{display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:20px;}
+    .scroll-btns{display:flex;gap:8px;}
+    .scroll-btn{
+      width:36px;height:36px;border:1px solid var(--line);background:transparent;
+      color:var(--amber);cursor:pointer;font-size:16px;display:flex;align-items:center;
+      justify-content:center;transition:border-color .3s,background .3s;border-radius:2px;
+    }
+    .scroll-btn:hover{border-color:var(--amber);background:rgba(245,184,112,.08);}
+    .scroll-btn:disabled{opacity:.25;cursor:not-allowed;}
+    .scroll-counter{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);font-family:'SFMono-Regular',Consolas,monospace;}
+    .hint{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);
+      margin-top:28px;opacity:.5;}
+
+    /* ── STAR MODAL ── */
+    #star-modal{
+      position:fixed;inset:0;z-index:5000;
+      display:flex;align-items:flex-end;justify-content:center;
+      background:rgba(3,2,3,0);pointer-events:none;
+      transition:background .4s;
+    }
+    #star-modal.open{background:rgba(3,2,3,.88);pointer-events:auto;}
+    .modal-inner{
+      width:100%;max-width:900px;
+      background:linear-gradient(180deg,#0d0b10 0%,#080608 100%);
+      border-top:1px solid var(--line);
+      transform:translateY(100%); transition:transform .5s cubic-bezier(.22,1,.36,1);
+      max-height:92vh; overflow-y:auto;
+      display:grid; grid-template-columns:1fr 1fr;
+    }
+    #star-modal.open .modal-inner{transform:translateY(0);}
+
+    .modal-portrait{position:relative;min-height:340px;}
+    .modal-portrait canvas{width:100%;height:100%;display:block;}
+
+    .modal-body{padding:40px 36px 48px;display:flex;flex-direction:column;gap:24px;border-left:1px solid var(--line);}
+    .modal-close{
+      position:absolute;top:16px;right:16px;z-index:10;
+      width:36px;height:36px;border:1px solid var(--line);background:transparent;
+      color:var(--ink);font-size:18px;cursor:pointer;display:flex;align-items:center;
+      justify-content:center;border-radius:2px;transition:border-color .3s,color .3s;
+    }
+    .modal-close:hover{border-color:var(--amber);color:var(--amber);}
+
+    .modal-eyebrow{font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:var(--amber);}
+    .modal-name{font-size:clamp(28px,5vw,52px);font-weight:400;letter-spacing:.02em;line-height:1.05;}
+    .modal-bayer{font-size:12px;letter-spacing:.25em;color:var(--muted);margin-top:4px;}
+
+    .modal-table{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin-top:4px;}
+    .modal-table dt{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);}
+    .modal-table dd{font-size:14px;letter-spacing:.05em;color:var(--ink);margin:0;margin-top:2px;}
+
+    .modal-desc{font-size:14px;line-height:1.75;color:rgba(237,230,218,.75);border-top:1px solid var(--line);padding-top:20px;}
+
+    .modal-nav-row{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:20px;}
+    .modal-nav-btn{
+      font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);
+      background:transparent;border:none;cursor:pointer;padding:6px 0;
+      transition:opacity .3s;
+    }
+    .modal-nav-btn:hover{opacity:.7;}
+    .modal-nav-btn:disabled{opacity:.2;cursor:not-allowed;}
+    .modal-nav-pos{font-size:10px;letter-spacing:.3em;color:var(--muted);font-family:monospace;}
+
+    /* ── SKYMAP ── */
+    .skymap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
+    .skymap p{max-width:640px;font-size:clamp(20px,3.2vw,38px);line-height:1.5;color:var(--ink);}
+    .skymap .sub{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--amber);margin-top:40px;}
+
+    /* ── MANIFESTO ── */
+    .manifesto{min-height:96vh;display:flex;align-items:center;justify-content:center;text-align:center;}
+    .manifesto .inner{max-width:780px;}
+    .manifesto blockquote{font-size:clamp(22px,3.4vw,40px);line-height:1.55;font-style:italic;color:#F0E6D6;border:none;margin:0;padding:0;}
+    .manifesto .src{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-top:46px;}
+
+    /* ── FOOTER ── */
+    footer{padding:14vh clamp(20px,5vw,60px) 60px;text-align:center;}
+    footer .big{font-size:clamp(40px,9vw,120px);font-weight:400;letter-spacing:.05em;
+      color:transparent;-webkit-text-stroke:1px rgba(245,184,112,.5);}
+    footer .foot-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;
+      margin-top:60px;padding-top:30px;border-top:1px solid var(--line);
+      font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);}
+    footer a{color:var(--amber);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .3s;}
+    footer a:hover{border-bottom-color:var(--amber);}
+
+    /* ── REDUCED MOTION ── */
+    @media(prefers-reduced-motion:reduce){
+      .reveal{opacity:1;transform:none;transition:none;}
+      .scrollcue .ln{animation:none;}
+      .star-card,.modal-inner{transition:none;}
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:860px){
+      .modal-inner{grid-template-columns:1fr;}
+      .modal-portrait{min-height:220px;}
+      .modal-body{border-left:none;border-top:1px solid var(--line);padding:28px 24px 40px;}
+    }
+    @media(max-width:720px){
+      body{cursor:auto;} .cur-dot,.cur-ring{display:none;}
+      .star-card{flex:0 0 180px;}
+      .modal-table{grid-template-columns:1fr;}
+    }
+    @media print{
+      canvas#cosmos,.vignette,.grain,.cur-dot,.cur-ring,#loader,nav,.scrollcue,#star-modal{display:none!important;}
+      .reveal{opacity:1!important;transform:none!important;}
+      body{background:#fff;color:#000;cursor:auto;}
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <canvas id="cosmos" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain"    aria-hidden="true"></div>
+  <div class="cur-dot"  aria-hidden="true"></div>
+  <div class="cur-ring" aria-hidden="true"></div>
+
+  <div id="loader" role="status" aria-live="polite">
+    <div class="label">Census in progress</div>
+    <div id="count">0</div>
+    <div class="of">of 100 catalogued stars</div>
+    <div class="bar"><i id="bar-fill"></i></div>
+  </div>
+
+  <nav aria-label="Site navigation">
+    <div class="brand">ASTRA</div>
+    <a class="concept" href="https://atlamaz.studio" target="_blank" rel="noopener noreferrer">Site concept by Atlamaz Studio</a>
+  </nav>
+
+  <!-- MODAL -->
+  <div id="star-modal" role="dialog" aria-modal="true" aria-labelledby="modal-name-el">
+    <div class="modal-inner">
+      <div class="modal-portrait" aria-hidden="true">
+        <canvas id="modal-canvas"></canvas>
+        <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="modal-eyebrow" id="modal-type-el"></div>
+          <div class="modal-name"    id="modal-name-el"></div>
+          <div class="modal-bayer mono" id="modal-bayer-el"></div>
+        </div>
+        <dl class="modal-table">
+          <dt>Constellation</dt><dd id="md-cons"></dd>
+          <dt>Distance</dt>     <dd id="md-dist"></dd>
+          <dt>App. Magnitude</dt><dd id="md-mag"></dd>
+          <dt>Temperature</dt>  <dd id="md-temp"></dd>
+          <dt>Luminosity</dt>   <dd id="md-lum"></dd>
+          <dt>Radius</dt>       <dd id="md-rad"></dd>
+        </dl>
+        <p class="modal-desc" id="modal-desc-el"></p>
+        <div class="modal-nav-row">
+          <button class="modal-nav-btn" id="modal-prev">← Prev</button>
+          <span class="modal-nav-pos"  id="modal-pos"></span>
+          <button class="modal-nav-btn" id="modal-next">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main id="main-content">
+    <!-- HERO -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow" aria-hidden="true">A living census of the celestial</div>
+      <h1 id="hero-title">ASTRA</h1>
+      <p class="tag">We chart what cannot be held — every star a line, every line a small refusal of the dark.</p>
+      <div class="scrollcue" aria-hidden="true"><span>Scroll</span><span class="ln"></span></div>
+    </section>
+
+    <!-- CENSUS -->
+    <section class="census" aria-labelledby="census-title">
+      <div class="shead reveal">
+        <span class="idx" aria-hidden="true">01 — The Registry</span>
+        <h2 id="census-title">100 Stars</h2>
+      </div>
+      <div class="scroll-ui reveal">
+        <div class="scroll-nav">
+          <div class="scroll-btns">
+            <button class="scroll-btn" id="btn-prev" aria-label="Scroll left">‹</button>
+            <button class="scroll-btn" id="btn-next" aria-label="Scroll right">›</button>
+          </div>
+          <span class="scroll-counter" id="scroll-counter">01 / 100</span>
+        </div>
+        <div class="scroll-track" id="scroll-track" role="list" aria-label="Star catalogue"></div>
+      </div>
+      <p class="hint" aria-hidden="true">Scroll horizontally · Click any star to explore</p>
+    </section>
+
+    <!-- SKYMAP -->
+    <section class="skymap" aria-label="Interactive sky map">
+      <div class="reveal">
+        <p>Move through it. The field answers your hand — drifting, breathing, never twice the same.</p>
+        <div class="sub" aria-hidden="true">Interactive sky · move your cursor</div>
+      </div>
+    </section>
+
+    <!-- MANIFESTO -->
+    <section class="manifesto" aria-label="ASTRA manifesto">
+      <div class="inner reveal">
+        <blockquote>"To count the stars is not to own them. It is to admit, with great precision, how much remains uncounted."</blockquote>
+        <p class="src">ASTRA — Manifesto, entry I</p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="big reveal" aria-hidden="true">UNCOUNTED</div>
+      <div class="foot-row">
+        <span>© 2026 ASTRA</span>
+        <span><a href="https://atlamaz.studio" target="_blank" rel="noopener noreferrer">atlamaz.studio</a></span>
+      </div>
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+  (function(){'use strict';
+
+  /* ═══════════════════════════════════════ STAR DATA */
+  var STARS=[
+    /* ── BRIGHTEST STARS ── */
+    {id:'S001',name:'Sirius',bayer:'α Canis Majoris',type:'Binary star',sp:'A',cons:'Canis Major',dist:'8.6 ly',mag:'−1.46',lum:'25× ☉',rad:'1.7× ☉',temp:'9,940 K',desc:'The brightest star in the night sky, visible even at twilight. Its white dwarf companion Sirius B completes an orbit every 50 years, and together they are called the "Dog Star" — responsible for the ancient concept of "dog days" of summer.'},
+    {id:'S002',name:'Canopus',bayer:'α Carinae',type:'Yellow-white supergiant',sp:'F',cons:'Carina',dist:'310 ly',mag:'−0.74',lum:'10,700× ☉',rad:'71× ☉',temp:'7,400 K',desc:'Second brightest star in the sky and the primary navigation beacon used by deep-space probes including Voyager. Its colossal luminosity makes it visible across galactic distances, yet it is far enough that its true power often goes unappreciated.'},
+    {id:'S003',name:'Rigil Kentaurus',bayer:'α Centauri A',type:'Sun-like star',sp:'G',cons:'Centaurus',dist:'4.37 ly',mag:'−0.27',lum:'1.5× ☉',rad:'1.2× ☉',temp:'5,790 K',desc:'Our nearest stellar neighbour (after Proxima Centauri) and the brightest member of the triple Alpha Centauri system. Nearly a solar twin, it offers astronomers the closest natural comparison to our own Sun.'},
+    {id:'S004',name:'Arcturus',bayer:'α Boötis',type:'Orange giant',sp:'K',cons:'Boötes',dist:'37 ly',mag:'−0.05',lum:'170× ☉',rad:'25× ☉',temp:'4,286 K',desc:'The brightest star in the northern hemisphere, a red giant nearing the end of its hydrogen-burning life. Its high space velocity suggests it is a visitor from a different, older galactic population that passed through the Milky Way.'},
+    {id:'S005',name:'Vega',bayer:'α Lyrae',type:'Main-sequence star',sp:'A',cons:'Lyra',dist:'25 ly',mag:'0.03',lum:'37× ☉',rad:'2.4× ☉',temp:'9,602 K',desc:'The reference zero-point for the astronomical magnitude scale, and part of the Summer Triangle. It rotates so fast that its equatorial radius is 20% larger than its polar radius — making it visibly oblate if you could see it up close.'},
+    {id:'S006',name:'Capella',bayer:'α Aurigae',type:'Binary giant',sp:'G',cons:'Auriga',dist:'43 ly',mag:'0.08',lum:'78× ☉',rad:'11.9× ☉',temp:'4,970 K',desc:'Two yellow giants orbiting each other every 104 days, so close they cannot be separated by any telescope. At magnitude 0.08 it is the sixth brightest star and the brightest in Auriga — an amber beacon in the winter sky.'},
+    {id:'S007',name:'Rigel',bayer:'β Orionis',type:'Blue supergiant',sp:'B',cons:'Orion',dist:'860 ly',mag:'0.13',lum:'120,000× ☉',rad:'78× ☉',temp:'12,100 K',desc:'A blue supergiant of extraordinary power — if placed at Vega\'s distance it would shine as bright as a crescent Moon. Rigel marks Orion\'s left foot and is destined to end its life in a spectacular supernova explosion.'},
+    {id:'S008',name:'Procyon',bayer:'α Canis Minoris',type:'Binary star',sp:'F',cons:'Canis Minor',dist:'11.5 ly',mag:'0.34',lum:'6.9× ☉',rad:'2.0× ☉',temp:'6,530 K',desc:'The eighth brightest star, accompanied by a white dwarf companion Procyon B — offering a preview of our Sun\'s distant future. Its name means "before the dog", as it rises just ahead of the Dog Star Sirius.'},
+    {id:'S009',name:'Achernar',bayer:'α Eridani',type:'Blue-white star',sp:'B',cons:'Eridanus',dist:'139 ly',mag:'0.46',lum:'3,150× ☉',rad:'6.8× ☉',temp:'15,000 K',desc:'The most oblate star known — it spins so fast that its equatorial diameter is 56% greater than its polar diameter. It marks the end of the river Eridanus, the longest constellation in the sky, winding across 60 degrees of the southern sky.'},
+    {id:'S010',name:'Betelgeuse',bayer:'α Orionis',type:'Red supergiant',sp:'M',cons:'Orion',dist:'548 ly',mag:'0.42',lum:'126,000× ☉',rad:'887× ☉',temp:'3,500 K',desc:'One of the largest stars visible to the naked eye — if placed at the Sun\'s position its surface would engulf Jupiter\'s orbit. Its dramatic dimming in 2019–2020 (the "Great Dimming") sparked widespread speculation about an imminent supernova.'},
+    {id:'S011',name:'Hadar',bayer:'β Centauri',type:'Triple star',sp:'B',cons:'Centaurus',dist:'390 ly',mag:'0.61',lum:'41,700× ☉',rad:'9.0× ☉',temp:'25,000 K',desc:'A triple system of hot blue stars that together make Hadar the second brightest object in Centaurus. Alongside Rigil Kentaurus it forms the "Southern Pointers" — two stars that guide southern-hemisphere observers to the Southern Cross.'},
+    {id:'S012',name:'Altair',bayer:'α Aquilae',type:'Main-sequence star',sp:'A',cons:'Aquila',dist:'17 ly',mag:'0.77',lum:'10.6× ☉',rad:'1.8× ☉',temp:'7,670 K',desc:'One of the Summer Triangle vertices, rotating so fast — once every 9 hours — that its equator bulges visibly. It was the first star other than the Sun to be directly resolved into an image by an optical interferometer.'},
+    {id:'S013',name:'Acrux',bayer:'α Crucis',type:'Multiple star',sp:'B',cons:'Crux',dist:'321 ly',mag:'0.77',lum:'25,000× ☉',rad:'7.8× ☉',temp:'24,000 K',desc:'The brightest star in the Southern Cross and 13th overall, actually at least four hot blue stars together. It appears on the national flags of Australia, New Zealand, Brazil, Papua New Guinea and Samoa — the most nationally commemorated star in the sky.'},
+    {id:'S014',name:'Aldebaran',bayer:'α Tauri',type:'Orange giant',sp:'K',cons:'Taurus',dist:'65 ly',mag:'0.85',lum:'439× ☉',rad:'44× ☉',temp:'3,910 K',desc:'The fiery red "eye of the Bull", 44 times wider than the Sun and one of the four Royal Stars of ancient Persian astronomy. Two Pioneer spacecraft are heading vaguely in its direction, though millions of years away from any encounter.'},
+    {id:'S015',name:'Antares',bayer:'α Scorpii',type:'Red supergiant',sp:'M',cons:'Scorpius',dist:'550 ly',mag:'1.09',lum:'87,700× ☉',rad:'700× ☉',temp:'3,400 K',desc:'Named "rival of Mars" for its fiery reddish colour, Antares is one of the largest stars visible to the naked eye with a diameter 700 times that of the Sun. It is expected to explode as a supernova within the next 100,000 years.'},
+    {id:'S016',name:'Spica',bayer:'α Virginis',type:'Binary star',sp:'B',cons:'Virgo',dist:'250 ly',mag:'0.97',lum:'20,000× ☉',rad:'7.4× ☉',temp:'25,300 K',desc:'A close binary so tidally distorted that both components are egg-shaped rather than spherical. The ancient Greek astronomer Hipparchus used its position to discover the precession of the equinoxes around 127 BCE.'},
+    {id:'S017',name:'Pollux',bayer:'β Geminorum',type:'Orange giant',sp:'K',cons:'Gemini',dist:'34 ly',mag:'1.14',lum:'32× ☉',rad:'9.1× ☉',temp:'4,586 K',desc:'The brightest star in Gemini and the nearest giant star to Earth, despite being labelled Beta. It hosts a confirmed exoplanet, Pollux b (Thestias), one of the first planets discovered orbiting a giant star.'},
+    {id:'S018',name:'Fomalhaut',bayer:'α Piscis Austrini',type:'Main-sequence star',sp:'A',cons:'Piscis Austrinus',dist:'25 ly',mag:'1.16',lum:'16× ☉',rad:'1.8× ☉',temp:'8,590 K',desc:'Surrounded by a dramatic debris disk imaged by Hubble — dubbed "the Eye of Sauron" by the press. Fomalhaut b was controversially identified as an exoplanet before being reinterpreted as an expanding cloud from a planetary collision.'},
+    {id:'S019',name:'Deneb',bayer:'α Cygni',type:'White supergiant',sp:'A',cons:'Cygnus',dist:'2,600 ly',mag:'1.25',lum:'196,000× ☉',rad:'203× ☉',temp:'8,525 K',desc:'Though it appears modest at magnitude 1.25, Deneb is one of the most intrinsically luminous stars known — if placed at Vega\'s distance it would cast visible shadows on Earth. It marks the tail of Cygnus the Swan.'},
+    {id:'S020',name:'Mimosa',bayer:'β Crucis',type:'Binary star',sp:'B',cons:'Crux',dist:'280 ly',mag:'1.25',lum:'34,000× ☉',rad:'8.4× ☉',temp:'27,000 K',desc:'Second brightest star in the Southern Cross, a pulsating Beta Cephei variable with tiny measurable brightness changes. It appears on multiple southern hemisphere national flags alongside its neighbour Acrux.'},
+    {id:'S021',name:'Regulus',bayer:'α Leonis',type:'Main-sequence star',sp:'B',cons:'Leo',dist:'79 ly',mag:'1.35',lum:'360× ☉',rad:'3.2× ☉',temp:'11,668 K',desc:'The "heart of the Lion" and one of the four Royal Stars of ancient Persian astronomy. It rotates once every 15.9 hours — if it spun just 16% faster the centrifugal force would tear it apart entirely.'},
+    {id:'S022',name:'Adhara',bayer:'ε Canis Majoris',type:'Binary star',sp:'B',cons:'Canis Major',dist:'430 ly',mag:'1.50',lum:'38,700× ☉',rad:'13× ☉',temp:'22,900 K',desc:'The second brightest star in Canis Major and the star that was brightest in Earth\'s sky roughly 4.7 million years ago, when its proximity was much greater. Its intense ultraviolet output is one of the most powerful ionizing sources known.'},
+    {id:'S023',name:'Castor',bayer:'α Geminorum',type:'Sextuple star',sp:'A',cons:'Gemini',dist:'51 ly',mag:'1.58',lum:'52× ☉',rad:'2.1× ☉',temp:'9,216 K',desc:'What appears to be a single bright star is actually six stars — three binary pairs all orbiting a common centre of mass in a complex hierarchical system. A landmark example of high-order stellar multiplicity.'},
+    {id:'S024',name:'Shaula',bayer:'λ Scorpii',type:'Triple star',sp:'B',cons:'Scorpius',dist:'570 ly',mag:'1.62',lum:'35,000× ☉',rad:'5.9× ☉',temp:'25,000 K',desc:'Second brightest in Scorpius, marking the scorpion\'s stinger alongside Lesath. The system contains a Beta Cephei-type pulsating primary that oscillates in brightness with clockwork precision every few hours.'},
+    {id:'S025',name:'Gacrux',bayer:'γ Crucis',type:'Red giant',sp:'M',cons:'Crux',dist:'88 ly',mag:'1.63',lum:'1,500× ☉',rad:'84× ☉',temp:'3,689 K',desc:'The northernmost and only red giant among the four main stars of the Southern Cross. Its M3III spectral class places it firmly on the red giant branch — an evolved star that has exhausted the hydrogen in its core.'},
+    {id:'S026',name:'Bellatrix',bayer:'γ Orionis',type:'Blue giant',sp:'B',cons:'Orion',dist:'250 ly',mag:'1.64',lum:'6,400× ☉',rad:'5.7× ☉',temp:'21,750 K',desc:'The third brightest star in Orion and one of the hunter\'s shoulders, also called the "Amazon Star". Its intense blue light comes from a surface temperature of over 21,000 K, making it among the hotter bright stars visible to the naked eye.'},
+    {id:'S027',name:'Elnath',bayer:'β Tauri',type:'Blue giant',sp:'B',cons:'Taurus',dist:'130 ly',mag:'1.65',lum:'700× ☉',rad:'4.2× ☉',temp:'13,824 K',desc:'The second brightest star in Taurus, shared with the constellation Auriga as Gamma Aurigae. It marks the tip of the northern horn of the Bull — the star that the constellation boundary originally split between two mythological figures.'},
+    {id:'S028',name:'Miaplacidus',bayer:'β Carinae',type:'White giant',sp:'A',cons:'Carina',dist:'111 ly',mag:'1.68',lum:'390× ☉',rad:'6.9× ☉',temp:'8,866 K',desc:'Second brightest in Carina after Canopus, and the second brightest star visible from the southern hemisphere overall. Its hybrid name blends Arabic and Latin, roughly translating as "waters of the flat lands".'},
+    {id:'S029',name:'Alnilam',bayer:'ε Orionis',type:'Blue supergiant',sp:'B',cons:'Orion',dist:'2,000 ly',mag:'1.69',lum:'537,000× ☉',rad:'42× ☉',temp:'27,500 K',desc:'The middle star of Orion\'s Belt, with a true luminosity exceeding half a million Suns. Despite this staggering output it appears only at magnitude 1.69, a testament to how far away these belt stars truly are.'},
+    {id:'S030',name:'Alnair',bayer:'α Gruis',type:'Blue-white star',sp:'B',cons:'Grus',dist:'101 ly',mag:'1.74',lum:'263× ☉',rad:'3.4× ☉',temp:'13,500 K',desc:'The brightest star in Grus the Crane, a fast-rotating B-type star with a flattened emission disk from its rapid spin. Its Arabic name "al-Nayyir" simply means "the bright one" — a name earned by dominating a sparse region of southern sky.'},
+    {id:'S031',name:'Alnitak',bayer:'ζ Orionis',type:'O-type supergiant',sp:'O',cons:'Orion',dist:'1,200 ly',mag:'1.77',lum:'250,000× ☉',rad:'20× ☉',temp:'29,500 K',desc:'The easternmost star of Orion\'s Belt and one of the hottest bright stars visible to the naked eye. The famous Horsehead Nebula is silhouetted just south of Alnitak against the glowing emission nebula IC 434, ionized by Alnitak\'s intense radiation.'},
+    {id:'S032',name:'Alioth',bayer:'ε Ursae Majoris',type:'Peculiar A-star',sp:'A',cons:'Ursa Major',dist:'83 ly',mag:'1.77',lum:'102× ☉',rad:'4.1× ☉',temp:'9,020 K',desc:'The brightest star of the Big Dipper\'s handle — and in all of Ursa Major — classified as an Ap star with peculiar chemical abundances shaped by a strong magnetic field. Following the arc of the Dipper\'s handle leads directly to Arcturus.'},
+    {id:'S033',name:'Dubhe',bayer:'α Ursae Majoris',type:'Orange giant',sp:'K',cons:'Ursa Major',dist:'124 ly',mag:'1.79',lum:'316× ☉',rad:'17× ☉',temp:'4,660 K',desc:'One of the two "Pointer Stars" of the Big Dipper that guides observers to Polaris and true north. Dubhe A is an orange giant, accompanied at great distance by a yellow dwarf, making this one of the wider binary systems.'},
+    {id:'S034',name:'Mirfak',bayer:'α Persei',type:'Yellow supergiant',sp:'F',cons:'Perseus',dist:'590 ly',mag:'1.79',lum:'5,000× ☉',rad:'56× ☉',temp:'6,350 K',desc:'The brightest star in Perseus, embedded in the heart of the Alpha Persei Cluster — a family of hot blue stars moving through space together. It lies directly along the Milky Way, set against one of the richest star fields in the northern sky.'},
+    {id:'S035',name:'Wezen',bayer:'δ Canis Majoris',type:'Yellow supergiant',sp:'F',cons:'Canis Major',dist:'1,600 ly',mag:'1.83',lum:'82,000× ☉',rad:'215× ☉',temp:'6,390 K',desc:'Despite appearing at a modest 1.83, Wezen\'s true luminosity is 82,000 Suns — one of the most intrinsically powerful stars visible to the unaided eye. Its Arabic name means "weight", perhaps reflecting its apparent sluggishness near the horizon.'},
+    {id:'S036',name:'Kaus Australis',bayer:'ε Sagittarii',type:'Binary star',sp:'B',cons:'Sagittarius',dist:'145 ly',mag:'1.85',lum:'375× ☉',rad:'6.8× ☉',temp:'9,960 K',desc:'The brightest star in Sagittarius and the southernmost of the three Kaus stars forming the Archer\'s bow. It sits inside the famous Teapot asterism, marking the base of the handle in one of the sky\'s most distinctive patterns.'},
+    {id:'S037',name:'Avior',bayer:'ε Carinae',type:'Binary star',sp:'K',cons:'Carina',dist:'630 ly',mag:'1.86',lum:'5,500× ☉',rad:'1.7× ☉',temp:'3,523 K',desc:'A binary pairing of an orange giant and a hot B2 companion, located in the False Cross asterism often confused with the true Southern Cross. It is one of the 58 navigational stars used by the Royal Australian Navy.'},
+    {id:'S038',name:'Alkaid',bayer:'η Ursae Majoris',type:'B-type star',sp:'B',cons:'Ursa Major',dist:'100 ly',mag:'1.86',lum:'594× ☉',rad:'3.4× ☉',temp:'15,540 K',desc:'The tip of the Big Dipper\'s handle, marking the Great Bear\'s tail. Unusually, it does not share the common motion of the other five Dipper stars, meaning it is merely a line-of-sight coincidence — unrelated to the Ursa Major Moving Group.'},
+    {id:'S039',name:'Sargas',bayer:'θ Scorpii',type:'White subgiant',sp:'F',cons:'Scorpius',dist:'270 ly',mag:'1.87',lum:'1,834× ☉',rad:'26× ☉',temp:'6,294 K',desc:'A rapidly evolving bright giant in Scorpius expanding off the main sequence. Its Sumerian name is one of the oldest recorded stellar names, predating Arabic astronomical tradition by thousands of years.'},
+    {id:'S040',name:'Atria',bayer:'α Trianguli Australis',type:'Orange giant',sp:'K',cons:'Triangulum Australe',dist:'415 ly',mag:'1.91',lum:'5,500× ☉',rad:'143× ☉',temp:'4,150 K',desc:'The brightest star in the Southern Triangle — one of the smallest constellations in the sky. It is an orange giant thought to have recently exhausted its core hydrogen and begun expanding, placing it at a key transitional moment in stellar evolution.'},
+    {id:'S041',name:'Alhena',bayer:'γ Geminorum',type:'Binary star',sp:'A',cons:'Gemini',dist:'109 ly',mag:'1.93',lum:'123× ☉',rad:'3.3× ☉',temp:'9,260 K',desc:'Marking the foot of Gemini\'s southern twin, Alhena is an A-type giant with a spectroscopic companion. The SETI project Project Phoenix surveyed it for artificial radio signals as part of the first generation of systematic searches for extraterrestrial intelligence.'},
+    {id:'S042',name:'Peacock',bayer:'α Pavonis',type:'Blue star',sp:'B',cons:'Pavo',dist:'179 ly',mag:'1.94',lum:'2,200× ☉',rad:'5.0× ☉',temp:'17,711 K',desc:'The brightest star in Pavo the Peacock and one of the 57 navigational stars used by the US Navy. Its common name was coined by British navigators in the 17th century who named the constellation after the exotic bird.'},
+    {id:'S043',name:'Alsephina',bayer:'δ Velorum',type:'Binary star',sp:'A',cons:'Vela',dist:'80 ly',mag:'1.96',lum:'69× ☉',rad:'2.6× ☉',temp:'9,440 K',desc:'Part of the False Cross — an asterism frequently confused with the Southern Cross — Alsephina is an eclipsing binary. Every 45 days one component partially passes in front of the other, causing a measurable dip in brightness detectable from Earth.'},
+    {id:'S044',name:'Mirzam',bayer:'β Canis Majoris',type:'Blue-white giant',sp:'B',cons:'Canis Major',dist:'490 ly',mag:'1.98',lum:'26,600× ☉',rad:'9.6× ☉',temp:'23,400 K',desc:'Its Arabic name means "the announcer" because it rises just before Sirius heralds the night. A Beta Cephei-type variable, it pulsates with tiny brightness changes repeating every six hours with extraordinary clockwork precision.'},
+    {id:'S045',name:'Polaris',bayer:'α Ursae Minoris',type:'Yellow supergiant',sp:'F',cons:'Ursa Minor',dist:'433 ly',mag:'1.98',lum:'2,500× ☉',rad:'46× ☉',temp:'6,015 K',desc:'The current North Star, within 0.7° of true north and used for celestial navigation for millennia. A Cepheid variable, its pulsation amplitude is slowly shrinking — it sits at the very tip of the Little Dipper\'s handle.'},
+    {id:'S046',name:'Alphard',bayer:'α Hydrae',type:'Orange giant',sp:'K',cons:'Hydra',dist:'177 ly',mag:'1.99',lum:'780× ☉',rad:'50× ☉',temp:'4,120 K',desc:'Called "the solitary one" — the brightest star in Hydra and one of the most isolated bright stars in the sky, with no other bright star within a large surrounding area. An orange giant with a slow stellar wind creating an extended circumstellar shell.'},
+    {id:'S047',name:'Hamal',bayer:'α Arietis',type:'Orange giant',sp:'K',cons:'Aries',dist:'66 ly',mag:'2.00',lum:'91× ☉',rad:'14.9× ☉',temp:'4,480 K',desc:'The brightest star in Aries and the location of the vernal equinox during the era when the zodiac was originally defined. Due to precession the equinox has since shifted into Pisces, but Hamal retains its title as the "first point of Aries".'},
+    {id:'S048',name:'Nunki',bayer:'σ Sagittarii',type:'Blue-white star',sp:'B',cons:'Sagittarius',dist:'228 ly',mag:'2.02',lum:'3,300× ☉',rad:'4.5× ☉',temp:'18,890 K',desc:'Second brightest in Sagittarius and one of the 57 navigational stars used for celestial navigation. It is a likely member of the Scorpius–Centaurus OB association — a sprawling family of massive young hot stars born together.'},
+    {id:'S049',name:'Diphda',bayer:'β Ceti',type:'Orange giant',sp:'K',cons:'Cetus',dist:'96 ly',mag:'2.04',lum:'145× ☉',rad:'16.8× ☉',temp:'4,797 K',desc:'The brightest star in Cetus despite its Beta designation — historically Alpha was assigned to Menkar. It has completed core hydrogen burning and is now fusing helium, a subtle but important transition in its long stellar life.'},
+    {id:'S050',name:'Mira',bayer:'ο Ceti',type:'Pulsating variable',sp:'M',cons:'Cetus',dist:'300 ly',mag:'2.0–10.1',lum:'8,400× ☉',rad:'400× ☉',temp:'3,150 K',desc:'The prototype of all long-period pulsating red giant variables, swelling and contracting over a 332-day cycle. At maximum it can rival first-magnitude stars; at minimum it vanishes without binoculars — a living demonstration of a dying star\'s final throes.'},
+
+    /* ── NEARBY STARS ── */
+    {id:'S051',name:'Proxima Centauri',bayer:'α Centauri C',type:'Red dwarf',sp:'M',cons:'Centaurus',dist:'4.24 ly',mag:'11.13',lum:'0.0017× ☉',rad:'0.15× ☉',temp:'3,042 K',desc:'The closest star to the Sun, a faint red dwarf orbiting the Alpha Centauri system over roughly 550,000 years. It hosts Proxima b, an Earth-mass planet in the habitable zone — our nearest potentially habitable world.'},
+    {id:'S052',name:"Barnard's Star",bayer:'V2500 Oph',type:'Red dwarf',sp:'M',cons:'Ophiuchus',dist:'5.96 ly',mag:'9.54',lum:'0.0004× ☉',rad:'0.2× ☉',temp:'3,134 K',desc:'The second closest star system and the fastest-moving star across our sky — it shifts by one full Moon\'s width every 180 years. In around 10,000 years it will become our nearest stellar neighbour, passing within 3.8 light-years.'},
+    {id:'S053',name:'Wolf 359',bayer:'CN Leonis',type:'Red dwarf',sp:'M',cons:'Leo',dist:'7.78 ly',mag:'13.54',lum:'0.0009× ☉',rad:'0.16× ☉',temp:'2,800 K',desc:'One of the least luminous stars known, smaller than some gas giant planets. Made famous as the site of the decisive battle in Star Trek: The Next Generation\'s "Best of Both Worlds", it is in reality one of the faintest objects in our stellar neighbourhood.'},
+    {id:'S054',name:'Epsilon Eridani',bayer:'ε Eridani',type:'Orange dwarf',sp:'K',cons:'Eridanus',dist:'10.5 ly',mag:'3.73',lum:'0.34× ☉',rad:'0.74× ☉',temp:'5,084 K',desc:'One of the nearest Sun-like stars and a long-time SETI target, it hosts a confirmed dust disk and at least one exoplanet candidate. Young and magnetically active, it may represent what our own Sun looked like 800 million years ago.'},
+    {id:'S055',name:'Tau Ceti',bayer:'τ Ceti',type:'G-type star',sp:'G',cons:'Cetus',dist:'11.9 ly',mag:'3.50',lum:'0.52× ☉',rad:'0.79× ☉',temp:'5,344 K',desc:'A near-solar twin with five candidate exoplanets — two potentially in the habitable zone. One of the first stars targeted in 1960 by Project Ozma, the pioneering scientific search for artificial radio signals from other civilisations.'},
+    {id:'S056',name:'61 Cygni',bayer:'61 Cygni A/B',type:'Binary red dwarf',sp:'K',cons:'Cygnus',dist:'11.4 ly',mag:'5.20',lum:'0.085× ☉',rad:'0.67× ☉',temp:'4,526 K',desc:'The first star (after the Sun) to have its distance accurately measured — by Friedrich Bessel in 1838. This measurement confirmed stellar distances for the first time and was a watershed moment in the history of astronomy.'},
+
+    /* ── EXTREME STARS ── */
+    {id:'S057',name:'Eta Carinae',bayer:'η Carinae',type:'Luminous blue variable',sp:'LBV',cons:'Carina',dist:'7,500 ly',mag:'~4 (var)',lum:'5,000,000× ☉',rad:'240× ☉',temp:'36,000 K',desc:'One of the most massive and luminous stars known, Eta Carinae underwent a "Great Eruption" in 1843 that briefly made it the second brightest star in the sky. Expected to explode as a hypernova — possibly producing a gamma-ray burst — within the next million years.'},
+    {id:'S058',name:'Mu Cephei',bayer:'μ Cephei',type:'Red supergiant',sp:'M',cons:'Cepheus',dist:'5,600 ly',mag:'4.08',lum:'269,000× ☉',rad:'972× ☉',temp:'3,750 K',desc:'Known as Herschel\'s Garnet Star for its striking deep-crimson colour, visible to the naked eye on a dark night. One of the largest stars in the Milky Way — if placed at the Sun\'s position its surface would reach beyond Jupiter — it will explode within the next 100,000 years.'},
+    {id:'S059',name:'VY Canis Majoris',bayer:'VY CMa',type:'Red hypergiant',sp:'M',cons:'Canis Major',dist:'3,900 ly',mag:'7.95',lum:'270,000× ☉',rad:'1,420× ☉',temp:'3,490 K',desc:'One of the largest stars ever measured — light would take over 8 hours to travel its diameter. Violently ejecting mass into enormous asymmetric nebula, it may soon produce one of the most energetic stellar explosions ever witnessed from Earth.'},
+    {id:'S060',name:'UY Scuti',bayer:'UY Scuti',type:'Red supergiant',sp:'M',cons:'Scutum',dist:'5,100 ly',mag:'8.29',lum:'340,000× ☉',rad:'1,708× ☉',temp:'3,365 K',desc:'Long considered the largest known star by radius — with a volume that could contain five billion Suns. A semi-regular pulsating variable embedded in a region of active star formation in the Scutum–Centaurus spiral arm of the Milky Way.'},
+    {id:'S061',name:'Pistol Star',bayer:'—',type:'Blue hypergiant',sp:'LBV',cons:'Sagittarius',dist:'25,000 ly',mag:'~8.5',lum:'1,600,000× ☉',rad:'306× ☉',temp:'12,000 K',desc:'Hidden behind dense interstellar dust in the Galactic Centre, the Pistol Star was discovered in infrared by the Hubble Space Telescope. One of the most luminous stars known — it sheds as much mass per year via its stellar wind as the Sun holds in several months.'},
+    {id:'S062',name:'R136a1',bayer:'RMC 136a1',type:'Wolf-Rayet star',sp:'WR',cons:'Dorado',dist:'163,000 ly',mag:'12.23',lum:'8,700,000× ☉',rad:'32× ☉',temp:'46,000 K',desc:'The most luminous star currently known, residing in the dense cluster R136 at the heart of the Tarantula Nebula in the Large Magellanic Cloud. At birth it may have had over 300 times the Sun\'s mass — far exceeding previously accepted theoretical limits for star formation.'},
+    {id:'S063',name:'P Cygni',bayer:'34 Cygni',type:'Luminous blue variable',sp:'LBV',cons:'Cygnus',dist:'5,000 ly',mag:'4.8',lum:'570,000× ☉',rad:'76× ☉',temp:'18,700 K',desc:'The prototype of the "P Cygni spectral profile" — a signature of expanding shells of gas that now carries its name in every spectrography textbook. In 1600 CE it erupted nova-like and was briefly visible to the naked eye before fading back.'},
+    {id:'S064',name:'Rho Cassiopeiae',bayer:'ρ Cassiopeiae',type:'Yellow hypergiant',sp:'YHG',cons:'Cassiopeia',dist:'8,200 ly',mag:'4–6 (var)',lum:'500,000× ☉',rad:'636× ☉',temp:'7,000 K',desc:'One of the rarest stellar types — a yellow hypergiant — and among the most massive stars in the Milky Way visible to the naked eye. In 2000–2001 it ejected a shell equal to a third of the Sun\'s mass in just 200 days, briefly becoming much cooler and dimmer.'},
+    {id:'S065',name:'Stephenson 2-18',bayer:'St2-18',type:'Red supergiant',sp:'M',cons:'Scutum',dist:'19,600 ly',mag:'~9',lum:'440,000× ☉',rad:'2,150× ☉',temp:'3,200 K',desc:'Possibly the largest known star by radius — if placed at the Sun\'s position its surface would extend beyond Saturn\'s orbit. Discovered only recently via near-infrared imaging, it lies hidden deep within the Scutum star cluster behind thick galactic dust.'},
+    {id:'S066',name:'WOH G64',bayer:'—',type:'Red supergiant',sp:'M',cons:'Dorado',dist:'163,000 ly',mag:'~18',lum:'280,000× ☉',rad:'1,504× ☉',temp:'3,400 K',desc:'One of the largest and most luminous red supergiants in the Large Magellanic Cloud, directly resolved into an image by the VLTI/GRAVITY interferometer in 2024. Surrounded by a thick torus of dust created by its intense stellar winds over millions of years.'},
+
+    /* ── VARIABLES & NOTABLE ── */
+    {id:'S067',name:'Algol',bayer:'β Persei',type:'Eclipsing binary',sp:'B',cons:'Perseus',dist:'93 ly',mag:'2.12',lum:'182× ☉',rad:'2.7× ☉',temp:'13,000 K',desc:'The "Demon Star" — ancient observers noticed its regular fading every 2.87 days, making it the first eclipsing binary ever identified. When the dimmer component passes in front of the brighter one, Algol drops from magnitude 2.1 to 3.4 in a matter of hours.'},
+    {id:'S068',name:'Delta Cephei',bayer:'δ Cephei',type:'Cepheid variable',sp:'F',cons:'Cepheus',dist:'890 ly',mag:'3.5–4.4',lum:'2,000× ☉',rad:'44× ☉',temp:'5,900 K',desc:'The prototype of all Cepheid variable stars, pulsating over a precise 5.37-day period. Henrietta Swan Leavitt\'s discovery that Cepheid period correlates with luminosity revolutionised our measurement of cosmic distances, enabling the first glimpse of the universe\'s true scale.'},
+    {id:'S069',name:'Beta Lyrae',bayer:'β Lyrae',type:'Eclipsing binary',sp:'B',cons:'Lyra',dist:'960 ly',mag:'3.25–4.36',lum:'25,000× ☉',rad:'15.2× ☉',temp:'13,300 K',desc:'A mass-transfer binary so close that the two stars share material through an accretion disk — one star is slowly devouring the other. The system varies continuously rather than showing discrete eclipse dips, as the geometry changes constantly.'},
+    {id:'S070',name:'T Coronae Borealis',bayer:'T CrB',type:'Recurrent nova',sp:'WD',cons:'Corona Borealis',dist:'3,000 ly',mag:'2.0–10.8',lum:'—',rad:'—',temp:'—',desc:'A white dwarf accreting material from a red giant companion, T CrB erupts approximately every 80 years when accumulated hydrogen ignites in a thermonuclear flash. The next outburst — anticipated in the late 2020s — will briefly make it visible to the naked eye.'},
+    {id:'S071',name:'RR Lyrae',bayer:'RR Lyrae',type:'Variable star',sp:'F',cons:'Lyra',dist:'860 ly',mag:'7.06–8.12',lum:'40× ☉',rad:'5× ☉',temp:'6,800 K',desc:'The prototype of an entire class of pulsating stars that serve as "standard candles" for measuring distances within the Milky Way and nearby galaxies. Its precise 13.6-hour pulsation period makes it an ideal calibration beacon for distance measurements.'},
+
+    /* ── PULSARS ── */
+    {id:'S072',name:'Crab Pulsar',bayer:'PSR B0531+21',type:'Neutron star',sp:'NS',cons:'Taurus',dist:'6,500 ly',mag:'~16',lum:'75,000× ☉',rad:'~0.00001× ☉',temp:'2,000,000 K',desc:'The remnant of a supernova witnessed in 1054 CE by Chinese and Arab astronomers, spinning 30 times per second. It powers the entire Crab Nebula by injecting rotational energy — equivalent to 200,000 Suns — into the surrounding gas.'},
+    {id:'S073',name:'Vela Pulsar',bayer:'PSR J0835−4510',type:'Neutron star',sp:'NS',cons:'Vela',dist:'1,000 ly',mag:'~23.6',lum:'11,000× ☉',rad:'~0.000012× ☉',temp:'1,000,000 K',desc:'One of the brightest pulsars in the radio sky, also a powerful gamma-ray emitter detected by NASA\'s Fermi telescope. The Vela Supernova Remnant surrounding it is one of the closest supernova remnants to Earth, visible as a faint optical nebula.'},
+    {id:'S074',name:'Geminga',bayer:'PSR J0633+1746',type:'Neutron star',sp:'NS',cons:'Gemini',dist:'800 ly',mag:'~25.5',lum:'3,200× ☉',rad:'~0.000013× ☉',temp:'500,000 K',desc:'A radio-quiet neutron star first detected as an unidentified gamma-ray source — its name derives from "GEMInI Gamma-ray source". It moves so fast through space that it creates a visible bow shock of compressed interstellar material ahead of it.'},
+
+    /* ── MORE BRIGHT & FAMOUS ── */
+    {id:'S075',name:'Alpheratz',bayer:'α Andromedae',type:'Binary star',sp:'B',cons:'Andromeda',dist:'97 ly',mag:'2.07',lum:'200× ☉',rad:'2.8× ☉',temp:'13,800 K',desc:'Shared between Andromeda and Pegasus, Alpheratz forms one corner of the Great Square of Pegasus. An Ap star with peculiar mercury and manganese abundances shaped by a strong magnetic field — a characteristic fingerprint of this exotic stellar class.'},
+    {id:'S076',name:'Mirach',bayer:'β Andromedae',type:'Red giant',sp:'M',cons:'Andromeda',dist:'197 ly',mag:'2.05',lum:'1,995× ☉',rad:'100× ☉',temp:'3,842 K',desc:'A red giant forming a convenient stepping-stone guide star to the Andromeda Galaxy, located just two short hops away. Its circumstellar envelope of ejected material extends several stellar radii, an early sign of the slow mass-loss that will eventually leave behind a white dwarf.'},
+    {id:'S077',name:'Almach',bayer:'γ Andromedae',type:'Multiple star',sp:'K',cons:'Andromeda',dist:'350 ly',mag:'2.10',lum:'2,000× ☉',rad:'80× ☉',temp:'4,250 K',desc:'One of the most beautiful coloured double stars in the sky — the warm orange giant primary contrasts strikingly with its intensely blue B-type companion only 10 arc-seconds away, creating an electric colour pairing that has delighted telescopic observers for centuries.'},
+    {id:'S078',name:'Saiph',bayer:'κ Orionis',type:'Blue supergiant',sp:'B',cons:'Orion',dist:'720 ly',mag:'2.09',lum:'56,000× ☉',rad:'11× ☉',temp:'26,500 K',desc:'Forming Orion\'s right knee, Saiph appears dimmer than Rigel — but only because it is intrinsically smaller. Its surface temperature exceeds Rigel\'s, making it one of the hotter supergiants in Orion\'s famous stellar family.'},
+    {id:'S079',name:'Mintaka',bayer:'δ Orionis',type:'O-type multiple',sp:'O',cons:'Orion',dist:'900 ly',mag:'2.23',lum:'90,000× ☉',rad:'16.5× ☉',temp:'30,000 K',desc:'The westernmost star of Orion\'s Belt, rising almost due east and setting almost due west — making it a natural compass direction-finder anywhere on Earth. It is a complex multiple system of at least five stars gravitationally bound together.'},
+    {id:'S080',name:'Schedar',bayer:'α Cassiopeiae',type:'Orange giant',sp:'K',cons:'Cassiopeia',dist:'228 ly',mag:'2.24',lum:'676× ☉',rad:'42× ☉',temp:'4,530 K',desc:'The brightest star in Cassiopeia and the first anchor-point of its famous W-shape. A slow pulsating variable, its brightness changes are tiny but detectable — a subtle reminder that even giant stars are never truly at rest.'},
+    {id:'S081',name:'Eltanin',bayer:'γ Draconis',type:'Orange giant',sp:'K',cons:'Draco',dist:'154 ly',mag:'2.24',lum:'471× ☉',rad:'48× ☉',temp:'3,930 K',desc:'The brightest star in Draco the Dragon. In 1728 astronomer James Bradley used careful observations of Eltanin\'s position to discover the aberration of starlight — definitively confirming that Earth orbits the Sun at measurable speed.'},
+    {id:'S082',name:'Naos',bayer:'ζ Puppis',type:'O-type supergiant',sp:'O',cons:'Puppis',dist:'1,100 ly',mag:'2.25',lum:'550,000× ☉',rad:'14× ☉',temp:'42,000 K',desc:'One of the hottest and most luminous stars visible to the naked eye, an O4 supergiant of terrifying intensity. Its ultraviolet output is so extreme that it is one of the single most powerful ionizing sources in its region of the Milky Way.'},
+    {id:'S083',name:'Enif',bayer:'ε Pegasi',type:'Orange supergiant',sp:'K',cons:'Pegasus',dist:'672 ly',mag:'2.38',lum:'5,000× ☉',rad:'185× ☉',temp:'4,337 K',desc:'Marking the muzzle of the winged horse Pegasus, this orange supergiant has been observed to produce rare dramatic flare events — temporarily brightening by several magnitudes in a matter of minutes, a phenomenon still not fully understood.'},
+    {id:'S084',name:'Dschubba',bayer:'δ Scorpii',type:'Binary star',sp:'B',cons:'Scorpius',dist:'400 ly',mag:'2.32',lum:'38,000× ☉',rad:'6.7× ☉',temp:'27,400 K',desc:'The middle star of Scorpius\'s head, Dschubba unexpectedly brightened in 2000 when its companion passed at closest approach, triggering an outburst that created a glowing emission disk around the primary — a dramatic and unanticipated event.'},
+    {id:'S085',name:'Caph',bayer:'β Cassiopeiae',type:'Delta Scuti star',sp:'F',cons:'Cassiopeia',dist:'54 ly',mag:'2.27',lum:'27× ☉',rad:'3.5× ☉',temp:'7,079 K',desc:'The leading star of Cassiopeia\'s W-shape, once used as the zero-reference of the sidereal time clock. A Delta Scuti pulsating variable, it oscillates with multiple simultaneous frequencies in its outer layers — a natural demonstration of stellar acoustics.'},
+    {id:'S086',name:'Mizar',bayer:'ζ Ursae Majoris',type:'Quadruple star',sp:'A',cons:'Ursa Major',dist:'83 ly',mag:'2.27',lum:'71× ☉',rad:'2.4× ☉',temp:'9,000 K',desc:'The first double star discovered telescopically, by Giovanni Battista Riccioli in 1650. Accompanied by naked-eye companion Alcor, Mizar is itself a quadruple system — four stars in two pairs — making this region of sky a remarkable gravitational hierarchy.'},
+    {id:'S087',name:'Alderamin',bayer:'α Cephei',type:'Main-sequence star',sp:'A',cons:'Cepheus',dist:'49 ly',mag:'2.45',lum:'18× ☉',rad:'2.3× ☉',temp:'7,740 K',desc:'Due to Earth\'s wobbling axis (precession), Alderamin will become the North Star around 7500 CE — the pole star of a future civilisation. It rotates very rapidly, completing one full rotation in around 12 hours, leaving it slightly flattened at the poles.'},
+    {id:'S088',name:'Ankaa',bayer:'α Phoenicis',type:'Orange giant',sp:'K',cons:'Phoenix',dist:'85 ly',mag:'2.40',lum:'74× ☉',rad:'14.7× ☉',temp:'4,436 K',desc:'The brightest star in Phoenix, named for the mythological bird of rebirth. An orange giant that has evolved well beyond the Sun\'s current state, it forms an optical pair with a nearby star — the two appear close but are unrelated in three-dimensional space.'},
+    {id:'S089',name:'Aludra',bayer:'η Canis Majoris',type:'Blue supergiant',sp:'B',cons:'Canis Major',dist:'2,000 ly',mag:'2.45',lum:'176,000× ☉',rad:'54× ☉',temp:'15,500 K',desc:'A distant blue supergiant at the tail of Canis Major, one of the most intrinsically luminous stars visible to the naked eye at magnitude 2.45. Expected to explode as a supernova within a few million years — close enough that its death might be visible in daylight.'},
+    {id:'S090',name:'Thuban',bayer:'α Draconis',type:'White giant',sp:'A',cons:'Draco',dist:'303 ly',mag:'3.65',lum:'260× ☉',rad:'4.9× ☉',temp:'10,000 K',desc:'The pole star of ancient Egypt — builders of the Great Pyramid of Giza oriented certain internal shafts toward it around 2750 BCE. Earth\'s axial precession has since moved the celestial pole away, and Polaris now holds the title Thuban once carried.'},
+    {id:'S091',name:'Izar',bayer:'ε Boötis',type:'Binary star',sp:'K',cons:'Boötes',dist:'210 ly',mag:'2.35',lum:'500× ☉',rad:'33× ☉',temp:'4,550 K',desc:'Called "Pulcherrima" (Most Beautiful) by Friedrich Struve for its electric orange-and-blue colour contrast. One of the finest coloured double stars in the northern hemisphere sky, the two components orbit each other over a very long period of thousands of years.'},
+    {id:'S092',name:'Graffias',bayer:'β Scorpii',type:'Sextuple star',sp:'B',cons:'Scorpius',dist:'404 ly',mag:'2.56',lum:'3,350× ☉',rad:'6.3× ☉',temp:'28,000 K',desc:'A complex sextuple system — six stars in a hierarchical gravitational arrangement — forming one of the prominent stars at the scorpion\'s head. Also called Acrab, from the Arabic for "scorpion", it is an important reference star for calibrating optical systems.'},
+    {id:'S093',name:'Aspidiske',bayer:'ι Carinae',type:'Yellow-white giant',sp:'F',cons:'Carina',dist:'690 ly',mag:'2.21',lum:'4,900× ☉',rad:'43× ☉',temp:'7,500 K',desc:'Part of the False Cross (with Alsephina, Avior, and Delta Velorum), Aspidiske is a bright yellow-white supergiant. Its unusual Greek name, assigned by Johann Bayer, refers to a small round shield — an inexplicable designation that has puzzled astronomers for centuries.'},
+    {id:'S094',name:'Zubenelgenubi',bayer:'α Librae',type:'Binary star',sp:'A',cons:'Libra',dist:'77 ly',mag:'2.75',lum:'34× ☉',rad:'2.1× ☉',temp:'8,519 K',desc:'Its name means "southern claw" in Arabic, reflecting Libra\'s origin as the claws of the Scorpion before it was separated into its own constellation. It is a wide visual binary, the two components separated by a vast 5,400 astronomical units.'},
+    {id:'S095',name:'Zubeneschamali',bayer:'β Librae',type:'Blue-white star',sp:'B',cons:'Libra',dist:'160 ly',mag:'2.61',lum:'130× ☉',rad:'4.9× ☉',temp:'11,607 K',desc:'The "northern claw" and the brightest star in Libra, often cited as the only star to appear visually greenish to the naked eye — though this perception remains debated among astronomers. Its name is the longest of any navigational star.'},
+    {id:'S096',name:'Sadalsuud',bayer:'β Aquarii',type:'Yellow supergiant',sp:'G',cons:'Aquarius',dist:'540 ly',mag:'2.87',lum:'2,200× ☉',rad:'47× ☉',temp:'5,608 K',desc:'The brightest star in Aquarius, its name means "the luckiest of the lucky" in Arabic — one of a pair of stars considered harbingers of spring rains. A yellow supergiant far more luminous than the Sun despite having a similar surface temperature.'},
+    {id:'S097',name:'Kaus Media',bayer:'δ Sagittarii',type:'Orange giant',sp:'K',cons:'Sagittarius',dist:'306 ly',mag:'2.70',lum:'1,180× ☉',rad:'62× ☉',temp:'3,867 K',desc:'The middle star of the three Kaus stars that form the Archer\'s bow in Sagittarius. It sits within the famous Teapot asterism, contributing to the handle — a region of sky pointing directly toward the Galactic Centre, the densest and most active part of our galaxy.'},
+    {id:'S098',name:'Markab',bayer:'α Pegasi',type:'Blue-white giant',sp:'B',cons:'Pegasus',dist:'133 ly',mag:'2.49',lum:'240× ☉',rad:'4.7× ☉',temp:'9,765 K',desc:'One of the four stars forming the Great Square of Pegasus, a prominent asterism in the northern autumn sky. Markab is exhausting its core hydrogen and beginning to swell toward giant status, placing it at the same transitional moment our own Sun will reach in about five billion years.'},
+    {id:'S099',name:'Denebola',bayer:'β Leonis',type:'Main-sequence star',sp:'A',cons:'Leo',dist:'36 ly',mag:'2.14',lum:'15× ☉',rad:'1.7× ☉',temp:'8,500 K',desc:'The tail of Leo the Lion and a Delta Scuti pulsating variable, Denebola is surrounded by an infrared-bright debris disk suggesting ongoing collisions between asteroid-sized bodies. This dusty disk may be analogous to our own Solar System\'s asteroid belt in an earlier, more violent era.'},
+    {id:'S100',name:'Girtab',bayer:'κ Scorpii',type:'Blue supergiant',sp:'B',cons:'Scorpius',dist:'480 ly',mag:'2.41',lum:'35,000× ☉',rad:'6.6× ☉',temp:'23,400 K',desc:'One of the stars marking the scorpion\'s curved tail, Girtab carries one of the oldest recorded stellar names — a Sumerian word predating Arabic astronomical tradition by millennia. A Beta Cephei variable, it pulsates with tiny but measurable brightness changes repeating every few hours.'}
+  ];
+
+  /* ═══════════════════════════════════════ SPECTRAL COLOURS */
+  var SC={O:'#9bb0ff',B:'#cad7ff',A:'#f0f4ff',F:'#fff4ea',G:'#ffe788',K:'#ffb347',M:'#ff6b45',WR:'#7df9ff',LBV:'#b0d4ff',YHG:'#fff099',NS:'#aaffee',WD:'#ddeeff'};
+
+  /* ═══════════════════════════════════════ BUILD CARDS */
+  var track=document.getElementById('scroll-track');
+  STARS.forEach(function(s,i){
+    var card=document.createElement('div');
+    card.className='star-card';
+    card.setAttribute('role','listitem');
+    card.setAttribute('tabindex','0');
+    card.setAttribute('data-sp',s.sp);
+    card.setAttribute('data-idx',String(i));
+    card.setAttribute('aria-label',s.name+', '+s.type+', '+s.dist);
+    card.style.setProperty('--sc',SC[s.sp]||'#f0f4ff');
+    card.innerHTML=
+      '<div class="card-glow" aria-hidden="true"></div>'+
+      '<div class="card-name">'+s.name+'</div>'+
+      '<div class="card-type mono">'+s.type+'</div>'+
+      '<div class="card-meta mono">'+
+        '<span><b>'+s.cons+'</b></span>'+
+        '<span>'+s.dist+'</span>'+
+        '<span>mag '+s.mag+'</span>'+
+      '</div>'+
+      '<span class="card-badge" aria-hidden="true">view ↗</span>';
+    card.addEventListener('click',function(){openModal(i);});
+    card.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();openModal(i);}
+    });
+    track.appendChild(card);
+  });
+
+  /* ═══════════════════════════════════════ SCROLL NAV */
+  var CARD_W=222;// card+gap
+  var btnPrev=document.getElementById('btn-prev');
+  var btnNext=document.getElementById('btn-next');
+  var counter=document.getElementById('scroll-counter');
+
+  function updateCounter(){
+    var idx=Math.round(track.scrollLeft/CARD_W)+1;
+    idx=Math.max(1,Math.min(idx,100));
+    counter.textContent=(idx<10?'0':'')+idx+' / 100';
+    btnPrev.disabled=track.scrollLeft<10;
+    btnNext.disabled=track.scrollLeft>=track.scrollWidth-track.clientWidth-10;
+  }
+  track.addEventListener('scroll',updateCounter,{passive:true});
+  updateCounter();
+
+  btnPrev.addEventListener('click',function(){track.scrollBy({left:-CARD_W*3,behavior:'smooth'});});
+  btnNext.addEventListener('click',function(){track.scrollBy({left:CARD_W*3,behavior:'smooth'});});
+
+  /* wheel → horizontal */
+  track.addEventListener('wheel',function(e){
+    if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){
+      e.preventDefault();
+      track.scrollLeft+=e.deltaY;
+    }
+  },{passive:false});
+
+  /* ═══════════════════════════════════════ MODAL */
+  var modal=document.getElementById('star-modal');
+  var modalCanvas=document.getElementById('modal-canvas');
+  var currentIdx=-1;
+
+  function openModal(idx){
+    currentIdx=idx;
+    renderModal(idx);
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+    document.getElementById('modal-close').focus();
+  }
+  function closeModal(){
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+    if(currentIdx>=0){
+      var card=track.querySelector('[data-idx="'+currentIdx+'"]');
+      if(card)card.focus();
+    }
+    currentIdx=-1;
+  }
+
+  function renderModal(idx){
+    var s=STARS[idx];
+    document.getElementById('modal-type-el').textContent=s.type;
+    document.getElementById('modal-name-el').textContent=s.name;
+    document.getElementById('modal-bayer-el').textContent=s.bayer+' · '+s.id;
+    document.getElementById('md-cons').textContent=s.cons;
+    document.getElementById('md-dist').textContent=s.dist;
+    document.getElementById('md-mag').textContent=s.mag;
+    document.getElementById('md-temp').textContent=s.temp;
+    document.getElementById('md-lum').textContent=s.lum;
+    document.getElementById('md-rad').textContent=s.rad;
+    document.getElementById('modal-desc-el').textContent=s.desc;
+    document.getElementById('modal-pos').textContent=(idx+1)+' of '+STARS.length;
+    document.getElementById('modal-prev').disabled=(idx===0);
+    document.getElementById('modal-next').disabled=(idx===STARS.length-1);
+    drawStarPortrait(s.sp,s.name);
+  }
+
+  document.getElementById('modal-close').addEventListener('click',closeModal);
+  document.getElementById('modal-prev').addEventListener('click',function(){if(currentIdx>0)renderModal(--currentIdx);});
+  document.getElementById('modal-next').addEventListener('click',function(){if(currentIdx<STARS.length-1)renderModal(++currentIdx);});
+
+  modal.addEventListener('click',function(e){if(e.target===modal)closeModal();});
+  document.addEventListener('keydown',function(e){
+    if(!modal.classList.contains('open'))return;
+    if(e.key==='Escape')closeModal();
+    if(e.key==='ArrowLeft'&&currentIdx>0)renderModal(--currentIdx);
+    if(e.key==='ArrowRight'&&currentIdx<STARS.length-1)renderModal(++currentIdx);
+  });
+
+  /* ═══════════════════════════════════════ STAR PORTRAIT */
+  function drawStarPortrait(sp,name){
+    var portrait=document.querySelector('.modal-portrait');
+    var W=portrait.offsetWidth||400;
+    var H=portrait.offsetHeight||340;
+    modalCanvas.width=W*2;
+    modalCanvas.height=H*2;
+    modalCanvas.style.width=W+'px';
+    modalCanvas.style.height=H+'px';
+    var ctx=modalCanvas.getContext('2d');
+    ctx.scale(2,2);// HiDPI
+    var hex=SC[sp]||'#f0f4ff';
+    var r=parseInt(hex.slice(1,3),16);
+    var g=parseInt(hex.slice(3,5),16);
+    var b=parseInt(hex.slice(5,7),16);
+    var cx=W/2,cy=H/2;
+    var sr=Math.min(W,H)*0.11;
+
+    // Background
+    ctx.fillStyle='#030203';
+    ctx.fillRect(0,0,W,H);
+
+    // Star field bg
+    var rng=mulberry32(hashStr(name));
+    for(var i=0;i<80;i++){
+      var sx=rng()*W,sy=rng()*H,ss=rng()*1.2+0.2;
+      ctx.globalAlpha=0.1+rng()*0.4;
+      ctx.fillStyle='#ffffff';
+      ctx.beginPath();ctx.arc(sx,sy,ss,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    // Outer corona
+    var g1=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.min(W,H)*0.55);
+    g1.addColorStop(0,'rgba('+r+','+g+','+b+',.35)');
+    g1.addColorStop(.5,'rgba('+r+','+g+','+b+',.1)');
+    g1.addColorStop(1,'rgba('+r+','+g+','+b+',0)');
+    ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+
+    // Mid halo
+    var g2=ctx.createRadialGradient(cx,cy,0,cx,cy,sr*2.8);
+    g2.addColorStop(0,'rgba('+r+','+g+','+b+',.9)');
+    g2.addColorStop(1,'rgba('+r+','+g+','+b+',0)');
+    ctx.fillStyle=g2;
+    ctx.beginPath();ctx.arc(cx,cy,sr*2.8,0,Math.PI*2);ctx.fill();
+
+    // Core
+    var g3=ctx.createRadialGradient(cx,cy,0,cx,cy,sr);
+    g3.addColorStop(0,'#ffffff');
+    g3.addColorStop(.35,hex);
+    g3.addColorStop(1,'rgba('+r+','+g+','+b+',0)');
+    ctx.fillStyle=g3;
+    ctx.beginPath();ctx.arc(cx,cy,sr,0,Math.PI*2);ctx.fill();
+
+    // Diffraction spikes (hot stars)
+    if(sp==='O'||sp==='B'||sp==='A'||sp==='WR'||sp==='LBV'){
+      ctx.save();
+      for(var a=0;a<4;a++){
+        var ang=(a*Math.PI/2)-(Math.PI/4);
+        for(var dir=-1;dir<=1;dir+=2){
+          var len=sr*(sp==='O'?14:10);
+          var gsp=ctx.createLinearGradient(cx,cy,
+            cx+Math.cos(ang*dir)*len,cy+Math.sin(ang*dir)*len);
+          gsp.addColorStop(0,'rgba('+r+','+g+','+b+',.8)');
+          gsp.addColorStop(1,'rgba('+r+','+g+','+b+',0)');
+          ctx.beginPath();ctx.moveTo(cx,cy);
+          ctx.lineTo(cx+Math.cos(ang*dir)*len,cy+Math.sin(ang*dir)*len);
+          ctx.strokeStyle=gsp;ctx.lineWidth=1.5;ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    // Pulsar rings
+    if(sp==='NS'){
+      for(var ring=1;ring<=4;ring++){
+        ctx.beginPath();
+        ctx.arc(cx,cy,sr*(2+ring*1.8),0,Math.PI*2);
+        ctx.strokeStyle='rgba('+r+','+g+','+b+','+(0.2/ring)+')';
+        ctx.lineWidth=1;ctx.stroke();
+      }
+    }
+  }
+
+  /* deterministic random helpers */
+  function hashStr(s){var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return h>>>0;}
+  function mulberry32(seed){return function(){seed+=0x6D2B79F5;var t=seed;t=Math.imul(t^t>>>15,1|t);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296;};}
+
+  /* ═══════════════════════════════════════ THREE.JS */
+  var scene,camera,renderer,stars,group,nebGroup,clock;
+  var PR=Math.min(window.devicePixelRatio||1,2);
+  var W=window.innerWidth,H=window.innerHeight;
+  var mouse={x:0,y:0},mLerp={x:0,y:0};
+  var camZ={cur:340,target:340};
+  var lastMove=0;
+  var animPaused=false;
+  var reduceMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  function hasWebGL(){
+    try{var c=document.createElement('canvas');
+      return!!(window.WebGLRenderingContext&&(c.getContext('webgl')||c.getContext('experimental-webgl')));}
+    catch(e){return false;}}
+
+  function radialTex(c1,c2){
+    var s=128,cv=document.createElement('canvas');cv.width=cv.height=s;
+    var ctx=cv.getContext('2d');
+    var g=ctx.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+    g.addColorStop(0,c1);g.addColorStop(.4,c2);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,s,s);
+    return new THREE.CanvasTexture(cv);}
+
+  function initThree(){
+    if(typeof THREE==='undefined')return;
+    scene=new THREE.Scene();
+    scene.fog=new THREE.FogExp2(0x050406,0.00065);
+    camera=new THREE.PerspectiveCamera(62,W/H,1,4000);
+    camera.position.set(0,0,camZ.cur);
+    renderer=new THREE.WebGLRenderer({canvas:document.getElementById('cosmos'),antialias:true,alpha:true,powerPreference:'high-performance'});
+    renderer.setSize(W,H);renderer.setPixelRatio(PR);
+    group=new THREE.Group();scene.add(group);
+    nebGroup=new THREE.Group();scene.add(nebGroup);
+
+    var COUNT=W<760?3500:6500;
+    var pos=new Float32Array(COUNT*3),col=new Float32Array(COUNT*3),siz=new Float32Array(COUNT),pha=new Float32Array(COUNT);
+    var palette=[[1,.95,.86],[.96,.72,.44],[.86,.9,1],[1,.88,.70],[1,1,1]];
+    for(var i=0;i<COUNT;i++){
+      var r=200+Math.random()*1400,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);
+      pos[i*3]=r*Math.sin(ph)*Math.cos(th);pos[i*3+1]=r*Math.sin(ph)*Math.sin(th)*.7;pos[i*3+2]=r*Math.cos(ph)-300;
+      var p=palette[Math.floor(Math.random()*palette.length)],br=.6+Math.random()*.4;
+      col[i*3]=p[0]*br;col[i*3+1]=p[1]*br;col[i*3+2]=p[2]*br;
+      siz[i]=Math.random()*Math.random()*5.5+1.2;pha[i]=Math.random()*Math.PI*2;}
+    var geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('aColor',new THREE.BufferAttribute(col,3));
+    geo.setAttribute('aSize',new THREE.BufferAttribute(siz,1));
+    geo.setAttribute('aPhase',new THREE.BufferAttribute(pha,1));
+    var mat=new THREE.ShaderMaterial({
+      uniforms:{uTime:{value:0},uPR:{value:PR},uWarp:{value:0}},
+      transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+      vertexShader:['attribute float aSize;','attribute float aPhase;','attribute vec3 aColor;',
+        'uniform float uTime,uPR,uWarp;','varying vec3 vColor;varying float vTw;',
+        'void main(){vColor=aColor;',
+        'vec4 mv=modelViewMatrix*vec4(position,1.0);',
+        'float tw=0.55+0.45*sin(uTime*1.6+aPhase);vTw=tw;',
+        'float wb=1.0+uWarp*2.4;',
+        'gl_PointSize=aSize*tw*uPR*(300.0/-mv.z)*wb;',
+        'gl_Position=projectionMatrix*mv;}'].join('\n'),
+      fragmentShader:['varying vec3 vColor;varying float vTw;',
+        'void main(){vec2 uv=gl_PointCoord-vec2(0.5);float d=length(uv);',
+        'float a=smoothstep(0.5,0.0,d);a=pow(a,1.6);',
+        'gl_FragColor=vec4(vColor*(0.7+0.7*vTw),a);}'].join('\n')
+    });
+    stars=new THREE.Points(geo,mat);group.add(stars);
+
+    var nTA=radialTex('rgba(245,184,112,0.55)','rgba(200,132,60,0.18)');
+    var nTB=radialTex('rgba(120,90,180,0.40)','rgba(60,40,110,0.12)');
+    function neb(tex,x,y,z,s,o){
+      var m=new THREE.SpriteMaterial({map:tex,transparent:true,opacity:o,blending:THREE.AdditiveBlending,depthWrite:false});
+      var sp=new THREE.Sprite(m);sp.position.set(x,y,z);sp.scale.set(s,s,1);nebGroup.add(sp);}
+    neb(nTA,-220,120,-600,1100,.5);neb(nTB,300,-160,-800,1400,.45);neb(nTA,120,260,-1000,900,.3);
+
+    clock=new THREE.Clock();animate();}
+
+  var warpOn=false,warpTimer=null;
+  function animate(){
+    if(!renderer)return;
+    requestAnimationFrame(animate);
+    if(animPaused)return;
+    var t=clock.getElapsedTime();
+    stars.material.uniforms.uTime.value=t;
+    mLerp.x+=(mouse.x-mLerp.x)*.04;mLerp.y+=(mouse.y-mLerp.y)*.04;
+    if(!reduceMotion){
+      group.rotation.y=t*.012+mLerp.x*.35;group.rotation.x=mLerp.y*.22;
+      nebGroup.rotation.y=t*.006-mLerp.x*.15;}
+    camZ.cur+=(camZ.target-camZ.cur)*.05;
+    camera.position.z=camZ.cur+(reduceMotion?0:Math.sin(t*.3)*8);
+    camera.position.x+=(mLerp.x*30-camera.position.x)*.05;
+    camera.position.y+=(-mLerp.y*20-camera.position.y)*.05;
+    camera.lookAt(0,0,-100);
+    if(!warpOn)stars.material.uniforms.uWarp.value*=.9;
+    renderer.render(scene,camera);}
+
+  document.addEventListener('visibilitychange',function(){
+    animPaused=document.hidden;if(!animPaused&&clock)clock.start();});
+
+  var resizeTimer;
+  window.addEventListener('resize',function(){
+    clearTimeout(resizeTimer);resizeTimer=setTimeout(function(){
+      W=window.innerWidth;H=window.innerHeight;
+      if(!renderer)return;
+      camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);},200);});
+
+  window.addEventListener('mousemove',function(e){
+    var now=Date.now();if(now-lastMove<16)return;lastMove=now;
+    mouse.x=(e.clientX/W)*2-1;mouse.y=(e.clientY/H)*2-1;
+    curDot.style.transform='translate('+e.clientX+'px,'+e.clientY+'px) translate(-50%,-50%)';
+    curDx=e.clientX;curDy=e.clientY;});
+
+  window.addEventListener('touchmove',function(e){
+    var t=e.touches[0];mouse.x=(t.clientX/W)*2-1;mouse.y=(t.clientY/H)*2-1;},{passive:true});
+
+  /* ═══════════════════════════════════════ CURSOR */
+  var curDot=document.querySelector('.cur-dot'),curRing=document.querySelector('.cur-ring');
+  var curRx=0,curRy=0,curDx=0,curDy=0;
+  (function loop(){curRx+=(curDx-curRx)*.18;curRy+=(curDy-curRy)*.18;
+    curRing.style.transform='translate('+curRx+'px,'+curRy+'px) translate(-50%,-50%)';
+    requestAnimationFrame(loop);})();
+  document.querySelectorAll('a,.star-card').forEach(function(el){
+    el.addEventListener('mouseenter',function(){document.body.classList.add('hov');});
+    el.addEventListener('mouseleave',function(){document.body.classList.remove('hov');});});
+
+  /* ═══════════════════════════════════════ REVEAL */
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});
+    },{threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  }else{document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in');});}
+
+  /* ═══════════════════════════════════════ LOADER */
+  function runLoader(){
+    var el=document.getElementById('count'),bar=document.getElementById('bar-fill');
+    var target=100,start=null,dur=2000;
+    function step(ts){
+      if(!start)start=ts;var p=Math.min((ts-start)/dur,1);
+      var e=1-Math.pow(1-p,3);
+      el.textContent=Math.floor(e*target).toLocaleString('en-US');
+      bar.style.width=(e*100)+'%';
+      if(p<1){requestAnimationFrame(step);}
+      else{setTimeout(function(){document.getElementById('loader').classList.add('done');},380);}}
+    requestAnimationFrame(step);}
+
+  /* ═══════════════════════════════════════ BOOT */
+  function boot(){
+    if(hasWebGL()&&typeof THREE!=='undefined'){
+      try{initThree();}catch(err){console.warn('ASTRA WebGL:',err);}}
+    runLoader();
+    updateCounter();}
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',boot);}
+  else{boot();}
+
+  }());
+  </script>
+</body>
+</html>
